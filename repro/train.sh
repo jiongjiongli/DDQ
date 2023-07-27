@@ -15,6 +15,7 @@
 # 此参数用于指定日志的输出，%J 表示 JOB_ID。
 #DSUB -e %J.out
 #DSUB -o %J.out
+
 #加载环境
 module load python/3.8.12-gcc-4.8.5-jbm
 module load cuda/11.1.0-gcc-4.8.5-67q

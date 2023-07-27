@@ -82,7 +82,8 @@ cd ~/ddq/legacy/proj/DDQ
 
 ```
 cd ~/ddq/legacy/proj/DDQ
-bash ./repro/train.sh
+chmod +x ./repro/train.sh
+dsub -s ./repro/train.sh
 ```
 
 
