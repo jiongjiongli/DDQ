@@ -54,7 +54,8 @@ matplotlib pycocotools scipy shapely six terminaltables \
 cityscapesscripts imagecorruptions scikit-learn \
 pytest-runner \
 ninja psutil \
-addict numpy packaging Pillow pyyaml yapf coverage lmdb onnx onnxoptimizer onnxruntime pytest PyTurboJPEG scipy tifffile
+addict numpy packaging Pillow pyyaml yapf coverage lmdb onnx onnxoptimizer onnxruntime pytest PyTurboJPEG scipy tifffile \
+ipython
 # mmengine>=0.3.0
 
 # Install pytorch.
@@ -78,7 +79,9 @@ cd ~/ddq/legacy/proj/DDQ
 
 
 
-# Train
+# 4 Train
+
+## Submit training job
 
 ```
 cd ~/ddq/legacy/proj/DDQ
@@ -88,7 +91,27 @@ dsub -s ./repro/train.sh
 
 
 
-# Test
+```
+cd ~/ddq/legacy/proj/DDQ
+chmod +x ./repro/gpu_4_train.sh
+dsub -s ./repro/gpu_4_train.sh
+```
+
+
+
+## Show / Cancel jobs
+
+```
+# Show running job id and status
+djob
+
+# Cancel job
+djob -T job_id
+```
+
+
+
+# 5 Test
 
 
 
