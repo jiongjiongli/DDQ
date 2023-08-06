@@ -1,6 +1,6 @@
 #!/bin/bash
 #此参数用于指定运行作业的名称
-#DSUB -n ddq_legacy_2023-07-26
+#DSUB -n ddq_legacy_train_2023-07-26
 #此处需要把“用户名”修改为用户的用户名，例如用户名为 gpuuser001 则此行写为“#DSUB -A root.bingxing2.gpuuser001”
 #DSUB -A root.bingxing2.gpuuser194
 #默认参数，一般不需要修改
