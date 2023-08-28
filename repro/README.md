@@ -47,6 +47,11 @@ ln -s ~/data/lvis ~/ddq/legacy/proj/DDQ/data/coco
 # DDQ DETR
 mkdir ~/ddq/legacy/proj/ddq_detr/data/
 ln -s ~/data/lvis ~/ddq/legacy/proj/ddq_detr/data/coco
+
+
+# New DDQ DETR
+mkdir ~/ddq/new/mmdetection/data/
+ln -s ~/data/lvis ~/ddq/new/mmdetection/data/coco
 ```
 
 Then data under `~/ddq/legacy/proj/DDQ/data/coco` or `~/ddq/legacy/proj/ddq_detr/data/coco` should be:
@@ -164,7 +169,7 @@ cd ~/ddq/legacy/proj/ddq_detr
 
 ## 3.2 New Environment
 
-
+### 3.2.1 DDQ DETR
 
 ```
 module load python/3.8.12-gcc-4.8.5-jbm
@@ -190,7 +195,6 @@ addict numpy packaging Pillow pyyaml yapf coverage lmdb onnx onnxoptimizer onnxr
 termcolor rich \
 dadaptation lion-pytorch parameterized \
 ipython
-# mmengine==0.6.0
 
 # Install pytorch.
 # Option 1: install directly.
@@ -202,12 +206,70 @@ wget -P ~/data/ https://download.pytorch.org/whl/cu111/torchvision-0.10.0%2Bcu11
 pip install ~/data/torch-1.9.0+cu111-cp38-cp38-linux_x86_64.whl
 pip install ~/data/torchvision-0.10.0+cu111-cp38-cp38-linux_x86_64.whl
 
-pip install mmengine==0.8.4
-pip install mmcv
+pip install mmengine==0.7.1
+pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9/index.html
 
 cd ~/ddq/new/mmdetection/
 pip install -v -e .
+
+# Test
+pip install asynctest \
+cityscapesscripts \
+codecov \
+flake8 \
+imagecorruptions \
+instaboostfast \
+interrogate \
+isort==4.3.21
+# Note: used for kwarray.group_items, this may be ported to mmcv in the future. 
+kwarray \
+memory_profiler \
+# -e git+https://github.com/open-mmlab/mmtracking@dev-1.x#egg=mmtrack \
+
+pip install -e git+https://gitee.com/jiongjiongli/mmtracking@dev-1.x#egg=mmtrack
+pip install nltk \
+onnx==1.7.0 \
+onnxruntime>=1.8.0 \
+parameterized \
+prettytable \
+protobuf<=3.20.1 \
+psutil \
+pip install pytest \
+transformers \
+ubelt \
+xdoctest>=0.10.0 \
+yapf
+
 ```
+
+
+
+### 3.2.2 DDQ DETR Colab 
+
+```
+!pip install --upgrade pip
+!pip install cython numpy \
+matplotlib pycocotools scipy shapely six terminaltables \
+cityscapesscripts imagecorruptions scikit-learn \
+pytest-runner \
+ninja psutil \
+addict numpy packaging Pillow pyyaml yapf coverage lmdb onnx onnxoptimizer onnxruntime pytest PyTurboJPEG scipy tifffile \
+termcolor rich \
+dadaptation lion-pytorch parameterized \
+ipython
+
+!pip install mmcv==2.0.0 -f https://download.openmmlab.com/mmcv/dist/cu118/torch2.0/index.html
+
+cd /content
+!git clone -b jiongjiongli/ddq_detr https://gitee.com/jiongjiongli/mmdetection_dev.git mmdetection
+
+cd /content/mmdetection/
+!pip install -v -e .
+
+
+```
+
+
 
 
 
@@ -224,7 +286,7 @@ chmod +x ./repro/launch_train.sh
 dsub -s ./repro/launch_train.sh
 ```
 
-### 
+
 
 ```
 cd ~/ddq/legacy/proj/DDQ
@@ -236,6 +298,8 @@ dsub -s ./repro/gpu_4_train.sh
 
 ### 4.1.2 DDQ DETR
 
+#### 4.1.2.1 Multi GPU
+
 ```
 cd ~/ddq/legacy/proj/ddq_detr
 cp ./repro/train.sh ./repro/launch_train.sh
@@ -245,11 +309,97 @@ dsub -s ./repro/launch_train.sh
 
 
 
+#### 4.1.2.2 Single GPU
+
+```
+module load python/3.8.12-gcc-4.8.5-jbm
+module load cuda/11.1.0-gcc-4.8.5-67q
+module load gcc/9.3.0-gcc-4.8.5-bxl
+
+source ~/ddq/legacy/detr_py38/bin/activate
+
+cd mmcv-2.0.0rc4
+export PYTHONPATH=`pwd`:$PYTHONPATH
+cd ~/ddq/legacy/proj/ddq_detr
+
+python tools/train.py projects/configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr
+
+python tools/train.py projects/configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr_seed7 --cfg-options randomness.seed=7
+
+# rm -rf ./exp/ddq_detr_seed7_det
+
+python tools/train.py projects/configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr_seed7_det --cfg-options randomness.seed=7 randomness.deterministic=True
+
+```
+
+
+
+### 4.1.3 New DDQ DETR
+
+#### 4.1.3.1 Single GPU
+
+```
+module load python/3.8.12-gcc-4.8.5-jbm
+module load cuda/11.1.0-gcc-4.8.5-67q
+module load gcc/9.3.0-gcc-4.8.5-bxl
+
+source ~/ddq/new/detr_py38/bin/activate
+
+cd ~/ddq/new/mmdetection/
+
+python tools/train.py configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr
+
+python tools/train.py configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr_seed7 --cfg-options randomness.seed=7
+
+# rm -rf ./exp/ddq_detr_seed7_det
+
+python tools/train.py configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr_seed7_det --cfg-options randomness.seed=7 randomness.deterministic=True
+
+```
+
+
+
 
 
 ```
-python tools/train.py projects/configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py ./exp/ddq_detr
+export CUDA_VISIBLE_DEVICES=-1
+
+cp configs/ddq_detr/ddq-detr-5scale_r50_8xb2-12e_coco.py configs/ddq_detr/train_ddq-detr-5scale_r50_8xb2-12e_coco.py
+
+vi configs/ddq_detr/train_ddq-detr-5scale_r50_8xb2-12e_coco.py
+
+# default_hooks=dict(checkpoint=dict(type='CheckpointHook', interval=1, by_epoch=False))
+
+python tools/train.py configs/ddq_detr/train_ddq-detr-5scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr
+
+cp configs/ddq_detr/ddq-detr-4scale_swinl_8xb2-30e_coco.py configs/ddq_detr/train_ddq-detr-4scale_swinl_8xb2-30e_coco.py
+
+vi configs/ddq_detr/train_ddq-detr-4scale_swinl_8xb2-30e_coco.py
+# init_cfg=None
+# default_hooks=dict(checkpoint=dict(type='CheckpointHook', interval=1, by_epoch=False))
+
+python tools/train.py configs/ddq_detr/train_ddq-detr-4scale_swinl_8xb2-30e_coco.py --work-dir ./exp/ddq_detr
+
 ```
+
+
+
+```
+pytest tests/test_models/test_dense_heads/test_ddq_detr_head.py 
+
+pytest tests/test_models/test_detectors/test_ddq_detr.py 
+
+pytest tests/test_models/test_layers/test_transformer.py
+
+pytest tests/test_models/test_losses/test_loss.py
+
+pytest tests/test_models/test_task_modules/test_assigners/test_topk_hungarian_assigner.py
+
+```
+
+
+
+
 
 
 
@@ -309,9 +459,30 @@ python tools/test.py projects/configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco
 
 python tools/test.py projects/configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py exp/ddq_detr/epoch_12.pth
 
+
+
 ```
 
 
+
+
+
+```
+PORT=50136 sh tools/dist_test.sh configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py ~/data/pretrain_models/ddq_detr_4scale_coco_1x.pth 8 --eval bbox
+
+python tools/test.py configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py ~/data/pretrain_models/ddq_detr_4scale_coco_1x.pth
+
+
+
+```
+
+
+
+
+
+```
+
+```
 
 
 
@@ -2002,6 +2173,8 @@ class DetectionTransformer(BaseDetector, metaclass=ABCMeta):
 
 
 
+
+
 ### DDQTransformerDecoder.be_distinct
 
 ```
@@ -2527,7 +2700,7 @@ class PackDetInputs(BaseTransform):
 
 # Train
 
-
+## train.main
 
 
 
@@ -2584,6 +2757,14 @@ runner.train()
                                                     	mode='loss')
                             -> return self.loss(inputs, data_samples)
                             -> DetectionTransformer.loss(batch_inputs, batch_data_samples)
+                            	# losses, {key: Tensor or List of Tensor}
+                            	
+                            parsed_losses, log_vars = self.parse_losses(losses)
+                            -> 	parsed_losses, 1 tensor value. 
+                            					Sum of each tensor.mean() where 'loss' in key.
+                            	log_vars, {key: 1 tensor value}
+                            
+                            optim_wrapper.update_params(parsed_losses)
 ```
 
 
@@ -2615,39 +2796,389 @@ class DetectionTransformer(BaseDetector, metaclass=ABCMeta):
 
 
 
+### DINO.forward_transformer
+
 ```
-# Replace randomly 1/4 gt labels in gt_labels, and embedding, 
-# shape: [num_groups * 2 * num_all_gt_bboxes, C]
-dn_label_query = self.generate_dn_label_query(gt_labels, num_groups)
+DeformableDETR.pre_transformer->
+    encoder_inputs_dict = dict(
+        feat=feat_flatten,                      shape: [B, num_anchors, C]
+        feat_mask=mask_flatten,                 shape: [B, num_anchors]
+        feat_pos=lvl_pos_embed_flatten,         shape: [B, num_anchors, C]
+        spatial_shapes=spatial_shapes,          shape: [num_levels=4, 2]
+        level_start_index=level_start_index,    shape: [num_levels=4]
+        valid_ratios=valid_ratios)              shape: [B, num_levels=4, 2]
+    decoder_inputs_dict = dict(
+        memory_mask=mask_flatten,               shape: [B, num_anchors]
+        spatial_shapes=spatial_shapes,          shape: [num_levels=4, 2]
+        level_start_index=level_start_index,    shape: [num_levels=4]
+        valid_ratios=valid_ratios)              shape: [B, num_levels=4, 2]
 
-# dn_bbox_query: 
-	normed gt bbox xyxy, 
-	for each left/top/right/bottom side:
-        for positive: randomly + (-1 / 2, 1 / 2) bbox_w or bbox_h
-        for negative: randomly + (-1, -1 / 2] U [1 / 2, 1) bbox_w or bbox_h
-	clamp [0, 1]
-	xyxy to cxcywh
-	un_sigmoid
-# 	shape: [num_groups * 2 * num_all_gt_bboxes, 4]
-generate_dn_bbox_query
+DeformableDETR.forward_encoder->
+    encoder_outputs_dict = dict(
+        memory=memory,                         shape: [B, num_anchors, C]
+        memory_mask=feat_mask,                 shape: [B, num_anchors]
+        spatial_shapes=spatial_shapes)         shape: [num_levels=4, 2]
 
-# image idx for each gt bbox, image_id, shape: [num_all_gt_bboxes]
+DINO.pre_decoder->
+    decoder_inputs_dict = dict(
+        query=query,                          # shape: [B, num_dino_queries + num_queries, C]
+        memory=memory,                        # shape: [B, num_anchors, C]
+        reference_points=reference_points,    # shape: [B, num_dino_queries + num_queries, 4]
+        									  # sigmoid cxcywh
+        dn_mask=dn_mask)
 
-# num_target_list: number of gt bboxes in each image
+    head_inputs_dict = dict(
+        enc_outputs_class=topk_score,         # shape: [B, num_queries, num_classes]
+        enc_outputs_coord=topk_coords,        # shape: [B, num_queries, 4], sigmoid cxcywh
+        dn_meta=dn_meta)
 
-# dn_label_query, [B, num_groups * 2 * max_num_gt_bboxes, C]
-#  dn_bbox_query, [B, num_groups * 2 * max_num_gt_bboxes, 4]
-dn_label_query, dn_bbox_query = self.collate_dn_queries
+DDQDETR.pre_decoder->
+    decoder_inputs_dict = dict(
+    	query=query,                        # shape: [B, num_dino_queries + num_queries + num_dense_queries,
+        												C]
+        memory=memory,                      # shape: [B, num_anchors, C]
+        reference_points=reference_points,  # shape: [B, num_dino_queries + num_queries + num_dense_queries,
+        												4],
+        									# sigmoid cxcywh
+            # detached cxcywh sigmoid,
+        dn_mask=dn_mask)
 
-num_queries_total = num_denoising_queries + num_matching_queries
-attn_mask, shape: [num_queries_total, num_queries_total]
+    head_inputs_dict = dict(
+        enc_outputs_class=topk_score,            # shape: [B, num_queries, num_classes]
+        enc_outputs_coord=topk_coords,           # shape: [B, num_queries, 4], sigmoid cxcywh
+        aux_enc_outputs_class=dense_topk_score,  # shape: [B, num_dense_queries, num_classes]
+        aux_enc_outputs_coord=dense_topk_coords, # shape: [B, num_dense_queries, 4], sigmoid cxcywh
+        dn_meta=dn_meta)
 
-dn_meta = dict(
-    num_denoising_queries=int(num_groups * 2 * max_num_gt_bboxes),
-    num_denoising_groups=num_groups)
+
+decoder_inputs_dict.update(tmp_dec_in)
+->
+    decoder_inputs_dict = dict(
+        memory_mask=mask_flatten,               shape: [B, num_anchors]
+        spatial_shapes=spatial_shapes,          shape: [num_levels=4, 2]
+        level_start_index=level_start_index,    shape: [num_levels=4]
+        valid_ratios=valid_ratios              shape: [B, num_levels=4, 2]
+        query=query,                          # shape: [B, num_dino_queries + num_queries, C]
+        memory=memory,                        # shape: [B, num_anchors, C]
+        reference_points=reference_points,    # shape: [B, num_dino_queries + num_queries, 4], 
+        									  # sigmoid cxcywh
+        dn_mask=dn_mask)
+        
+DINO.forward_decoder
+->
+	decoder_outputs_dict = dict(
+		hidden_states=inter_states,           List of shape: [B, num_dino_queries + num_queries, C]
+												# len=num_layers
+		references=list(references)),         List of shape: [B, num_dino_queries + num_queries, 4]
+												# len=num_layers + 1, sigmoid cxcywh
+
+head_inputs_dict.update(decoder_outputs_dict)
+->
+    head_inputs_dict = dict(
+        enc_outputs_class=topk_score,         # shape: [B, num_queries, num_classes]
+        enc_outputs_coord=topk_coords,        # shape: [B, num_queries, 4], sigmoid cxcywh
+        dn_meta=dn_meta,
+		hidden_states=inter_states,           List of shape: [B, num_dino_queries + num_queries, C]
+												# len=num_layers
+		references=list(references)),         List of shape: [B, num_dino_queries + num_queries, 4]
+												# len=num_layers + 1, sigmoid cxcywh
+
+# Return to DetectionTransformer.loss
+# Passed to DINOHead inst.loss 
+return head_inputs_dict
 ```
 
 
+
+### DINO.pre_decoder
+
+```
+D:\proj\git\mmdetection\mmdet\models\detectors\dino.py
+
+class DINO(DeformableDETR):
+    def pre_decoder(...):
+    	# Inputs:
+            memory=memory,                         shape: [B, num_anchors, C]
+            memory_mask=feat_mask,                 shape: [B, num_anchors]
+            spatial_shapes=spatial_shapes,         shape: [num_levels=4, 2]
+            batch_data_samples,                    [DetDataSample inst]
+    	#
+    	
+    	output_memory,                             shape: [B, num_anchors, C]
+    	output_proposals,                          shape: [B, num_anchors, 4]
+    	
+    	enc_outputs_class,                         shape: [B, num_anchors, num_classes]
+    	enc_outputs_coord_unact,                   shape: [B, num_anchors, 4]
+    	
+    	topk_indices,                              shape: [B, num_queries]
+    	topk_score,                                shape: [B, num_queries, num_classes]
+    	topk_coords_unact,                         shape: [B, num_queries, 4]
+    	
+    	query,                                     shape: [B, num_queries, C]
+    	
+    	# dn_label_query, shape: [B, num_dino_queries, C]
+    	# dn_bbox_query,  shape: [B, num_dino_queries, 4]
+    	dn_label_query, dn_bbox_query, dn_mask, dn_meta =  self.dn_query_generator(batch_data_samples)
+
+		query = torch.cat([dn_label_query, query], dim=1)
+                                                   shape: [B, num_dino_queries + num_queries, C]
+        reference_points = torch.cat([dn_bbox_query, topk_coords_unact],  dim=1)
+                                                   shape: [B, num_dino_queries + num_queries, 4]
+        
+        decoder_inputs_dict = dict(
+            query=query,                          # shape: [B, num_dino_queries + num_queries, C]
+            memory=memory,                        # shape: [B, num_anchors, C]
+            reference_points=reference_points,    # shape: [B, num_dino_queries + num_queries, 4]
+            dn_mask=dn_mask)
+        
+        head_inputs_dict = dict(
+            enc_outputs_class=topk_score,shape:   # shape: [B, num_queries, num_classes]
+            enc_outputs_coord=topk_coords,shape:  # shape: [B, num_queries, 4]
+            dn_meta=dn_meta)
+
+return decoder_inputs_dict, head_inputs_dict
+```
+
+## CdnQueryGenerator
+
+```
+D:\proj\git\mmdetection\mmdet\models\layers\transformer\dino_layers.py
+
+class CdnQueryGenerator(BaseModule):
+
+    def __call__(...):   
+    	gt_labels, shape: [num_all_gt_bboxes]
+    	gt_bboxes, shape: [num_all_gt_bboxes, 4]
+    	num_groups = max(1, num_dn_queries=100 // max_num_gt_bboxes)
+    	
+        # Replace randomly 1/4 gt labels in gt_labels, and embedding, 
+        # shape: [num_groups * 2 * num_all_gt_bboxes, C]
+        dn_label_query = self.generate_dn_label_query(gt_labels, num_groups)
+
+        # dn_bbox_query: 
+            normed gt bbox xyxy, 
+            for each left/top/right/bottom side:
+                for positive: randomly + (-1 / 2, 1 / 2) bbox_w or bbox_h
+                for negative: randomly + (-1, -1 / 2] U [1 / 2, 1) bbox_w or bbox_h
+            clamp [0, 1]
+            xyxy to cxcywh
+            un_sigmoid
+        # 	shape: [num_groups * 2 * num_all_gt_bboxes, 4]
+        dn_bbox_query = self.generate_dn_bbox_query(gt_bboxes, num_groups)
+
+        # image idx for each gt bbox, image_id, shape: [num_all_gt_bboxes]
+
+        # num_target_list: number of gt bboxes in each image
+
+        # dn_label_query, [B, num_groups * 2 * max_num_gt_bboxes, C]
+        #  dn_bbox_query, [B, num_groups * 2 * max_num_gt_bboxes, 4]
+        dn_label_query, dn_bbox_query = self.collate_dn_queries
+
+        num_queries_total = num_denoising_queries + num_matching_queries
+        attn_mask, shape: [num_queries_total, num_queries_total]
+
+        dn_meta = dict(
+            num_denoising_queries=int(num_groups * 2 * max_num_gt_bboxes),
+            num_denoising_groups=num_groups)
+            
+		return dn_label_query, dn_bbox_query, attn_mask, dn_meta
+```
+
+
+
+# Head
+
+## DINOHead
+
+```
+class DINOHead(DeformableDETRHead):
+    def loss(...):
+    	# Inputs:
+            hidden_states=inter_states,         # List of shape: [B, num_dino_queries + num_queries, C]
+												# len=num_layers
+            references=list(references)),       # List of shape: [B, num_dino_queries + num_queries, 4]
+												# len=num_layers + 1
+            enc_outputs_class=topk_score,       # shape: [B, num_queries, num_classes]
+            enc_outputs_coord=topk_coords,      # shape: [B, num_queries, 4]
+            									# sigmoid cxcywh
+            batch_data_samples, 
+            dn_meta
+        #
+		
+		batch_gt_instances, # List of gt_instances for each image.
+		batch_img_metas,    # List of metainfo for each image.
+		
+        outs = self(hidden_states, references)
+        -> DeformableDETRHead.forward(hidden_states, references):
+	        # Outputs:
+        	all_layers_outputs_classes, shape: [num_layers, B, num_dino_queries + num_queries, num_classes]
+        	all_layers_outputs_coords,  shape: [num_layers, B, num_dino_queries + num_queries, 4]
+        		sigmoid cxcywh
+        		
+        loss_inputs = outs + (enc_outputs_class, enc_outputs_coord,
+                              batch_gt_instances, batch_img_metas, dn_meta)
+        losses = self.loss_by_feat(*loss_inputs)
+        return losses
+        
+    def loss_by_feat(...):
+    	# Inputs:
+    	#
+        all_layers_cls_scores, all_layers_outputs_classes, 
+        						shape: [num_layers, B, num_dino_queries + num_queries, num_classes]
+        all_layers_bbox_preds, all_layers_outputs_coords, sigmoid cxcywh,
+        						shape: [num_layers, B, num_dino_queries + num_queries, 4]
+        enc_cls_scores, enc_outputs_class=topk_score,       
+        						shape: [B, num_queries, num_classes]
+        enc_bbox_preds, enc_outputs_coord=topk_coords,      
+        						shape: [B, num_queries, 4]
+        batch_gt_instances,     List of gt_instances for each image.
+        batch_img_metas,        List of metainfo for each image.
+        dn_meta,
+        batch_gt_instances_ignore = None
+    )
+```
+
+
+
+## DETRHead
+
+```
+D:\proj\git\mmdetection\mmdet\models\dense_heads\detr_head.py
+
+class DETRHead(BaseModule):
+    def loss_by_feat_single(...):
+    	# Calculate loss of output of each encoder / decoder layer from matched queries, not dino queries.
+    	# Inputs:
+            cls_scores,             shape: [B, num_queries, num_classes]
+            bbox_preds, sigmoid cxcywh,
+            						shape: [B, num_queries, 4]
+            batch_gt_instances,     List of gt_instances for each image.
+            batch_img_metas,        List of metainfo for each image.
+        #
+        
+        -> DETRHead.get_targets(...)
+            labels_list, gt class index of each predict, `num_classes` for negative, 
+                List of shape [num_queries]
+            label_weights_list, 1, 
+                List of shape [num_queries]
+            bbox_targets_list, normed cxcywh for positive, 0 for negative, 
+                List of shape [num_queries, 4]
+            bbox_weights_list, 1 for positive, 0 for negative, 
+                List of shape [num_queries, 4] 
+            num_total_pos, number of all positive queries, 
+                int
+            num_total_neg, number of all negative queries, 
+                int
+        
+        labels,        shape [B * num_queries], gt class index of each predict, `num_classes` for negative 
+        label_weights, shape [B * num_queries], 1
+        bbox_targets,  shape [B * num_queries, 4], normed cxcywh for positive, 0 for negative
+        bbox_weights,  shape [B * num_queries, 4], 1 for positive, 0 for negative
+        
+        cls_scores, shape [B * num_queries, num_classes]
+        
+        cls_avg_factor = num_total_pos * 1.0 +  num_total_neg * self.bg_cls_weight=0
+        cls_avg_factor = reduce_mean(cls_scores.new_tensor([cls_avg_factor]))
+        cls_avg_factor = max(cls_avg_factor, 1)
+        
+        if isinstance(self.loss_cls, QualityFocalLoss):
+        	...
+		else:
+			# FocalLoss
+            loss_cls = self.loss_cls(
+                cls_scores, labels, label_weights, avg_factor=cls_avg_factor)
+		
+		factors, [B * num_queries, 4], image input whwh before padding to batch.
+		
+		bbox_preds, sigmoid cxcywh, shape: [B * num_queries, 4]
+		bboxes, pred unnormed xyxy, shape: [B * num_queries, 4]
+		bboxes_gt, gt unnormed xyxy for positive, 0 for negative, 
+									shape: [B * num_queries, 4]
+		
+		# GIoULoss
+        loss_iou = self.loss_iou(
+            bboxes, bboxes_gt, bbox_weights, avg_factor=num_total_pos)
+		
+		# L1Loss
+        loss_bbox = self.loss_bbox(
+            bbox_preds, bbox_targets, bbox_weights, avg_factor=num_total_pos)
+ 		return loss_cls, loss_bbox, loss_iou
+                                           
+    def get_targets(...):
+        # Inputs:
+            cls_scores_list,        List of shape [num_queries, num_classes] for each image.
+            bbox_preds_list,        List of shape [num_queries, 4] for each image.
+            batch_gt_instances,     List of gt_instances for each image.
+            batch_img_metas,        List of metainfo for each image.
+    	#
+    	
+    	# Outputs:
+    		labels_list, gt class index of each predict, `num_classes` for negative, 
+        		List of shape [num_queries]
+    		label_weights_list, 1, 
+        		List of shape [num_queries]
+    		bbox_targets_list, normed cxcywh for positive, 0 for negative, 
+        		List of shape [num_queries, 4]
+    		bbox_weights_list, 1 for positive, 0 for negative, 
+        		List of shape [num_queries, 4] 
+    		num_total_pos, number of all positive queries, 
+    			int
+    		num_total_neg, number of all negative queries, 
+    			int
+    	#
+    	
+    	
+    def _get_targets_single(...):
+    	# Inputs:
+            cls_score,              shape [num_queries, num_classes] 
+            bbox_pred, sigmoid cxcywh, 
+            						shape [num_queries, 4]
+            gt_instances,           InstanceData
+            img_meta,               dict
+        #
+        
+        # cls_score, logits,        shape [num_queries, num_classes] 
+        # bbox_pred, unnormalized xyxy, 
+        							shape [num_queries, 4]
+        pred_instances = InstanceData(scores=cls_score, bboxes=bbox_pred)
+        
+        assign_result = self.assigner.assign(
+            pred_instances=pred_instances,
+            gt_instances=gt_instances,
+            img_meta=img_meta)
+        -> HungarianAssigner.assign:
+        	assigned_gt_inds, shape [num_queries]
+        	assigned_gt_inds=0
+        	
+        	assigned_gt_inds[matched_row_inds] = matched_col_inds + 1
+        	
+        pos_inds, matched query index, shape [num_matched]
+        pos_assigned_gt_inds, matched gt index, shape [num_matched]
+        pos_gt_bboxes, matched gt bbox, shape [num_matched, 4]
+        
+        labels, gt class index of each predict, `num_classes` for negative, shape [num_queries]
+        
+        label_weights, 1, shape [num_queries]
+        
+        bbox_targets, normed cxcywh for positive, 0 for negative, shape [num_queries, 4]
+        
+        bbox_weights, 1 for positive, 0 for negative, shape [num_queries, 4]
+        
+        # Outputs:
+        	labels, gt class index of each predict, `num_classes` for negative, 
+        		shape [num_queries]
+        	label_weights, 1, 
+        		shape [num_queries]
+        	bbox_targets, normed cxcywh for positive, 0 for negative, 
+        		shape [num_queries, 4]
+        	bbox_weights, 1 for positive, 0 for negative, 
+        		shape [num_queries, 4] 
+        	pos_inds, matched query index, 
+        		shape [num_matched]
+        	neg_inds, no matched query index, 
+        		shape [num_queries - num_matched]
+        #
+```
 
 
 
@@ -2716,9 +3247,524 @@ class COCO:
 
 
 
+# PyTorch 
+
+## Dataset
+
+```Python
+torch/utils/data/dataset.py
+
+from typing import (
+    Generic,
+    ...
+    TypeVar,
+    ...
+)
+
+T_co = TypeVar('T_co', covariant=True)
+
+class Dataset(Generic[T_co]):
+    def __getitem__(self, index) -> T_co:
+        raise NotImplementedError("Subclasses of Dataset should implement __getitem__.")
+
+    # def __getitems__(self, indices: List) -> List[T_co]:
+    # Not implemented to prevent false-positives in fetcher check in
+    # torch.utils.data._utils.fetch._MapDatasetFetcher
+
+    def __add__(self, other: 'Dataset[T_co]') -> 'ConcatDataset[T_co]':
+        return ConcatDataset([self, other])
+
+    # No `def __len__(self)` default?
+    # See NOTE [ Lack of Default `__len__` in Python Abstract Base Classes ]
+    # in pytorch/torch/utils/data/sampler.py
+```
 
 
 
+## DataLoader
+
+
+
+### Workflow
+
+```
+DataLoader.__iter__() -> '_BaseDataLoaderIter'
+-> return DataLoader._get_iterator()
+-> return _SingleProcessDataLoaderIter(DataLoader inst) if DataLoader inst.num_workers == 0
+    -> _SingleProcessDataLoaderIter inst._dataset_fetcher = _DatasetKind.create_fetcher(...)
+    	-> return _MapDatasetFetcher(...) if kind == _DatasetKind.Map
+
+
+_SingleProcessDataLoaderIter.__next__()
+-> _BaseDataLoaderIter.__next__()
+    if self._sampler_iter is None:
+        self._reset()
+        
+    data = self._next_data()
+    -> _SingleProcessDataLoaderIter._next_data()
+        index = self._next_index()
+        -> _SingleProcessDataLoaderIter._next_index()
+        	# self._sampler_iter = iter of batch_sampler if it is not None else sampler
+        	return next(self._sampler_iter)
+        
+        data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+        -> _MapDatasetFetcher.fetch(index)
+        	def fetch(self, possibly_batched_index):
+                if self.auto_collation: # batch_sampler is not None
+                    if hasattr(self.dataset, "__getitems__") and self.dataset.__getitems__:
+                        data = self.dataset.__getitems__(possibly_batched_index)
+                    else:
+                        data = [self.dataset[idx] for idx in possibly_batched_index]
+                else:
+                    data = self.dataset[possibly_batched_index]
+                
+                return self.collate_fn(data)
+        
+        if self._pin_memory:
+            data = _utils.pin_memory.pin_memory(data, self._pin_memory_device)
+        return data
+    
+    return data
+    
+    
+```
+
+
+
+### DataLoader sampler and batch_sampler
+
+```python
+Assume dataset is not IterableDataset.
+
+# 1.
+if sampler is None and batch_sampler is None:
+    if shuffle:
+        sampler = RandomSampler(dataset, generator=generator)
+    else:
+        sampler = SequentialSampler(dataset)
+            
+    if batch_size is not None:
+        batch_sampler = BatchSampler(sampler, batch_size, drop_last)
+
+# 2.
+if sampler is not None and batch_sampler is None:
+    Must: 
+        shuffle = None or False
+    
+    if batch_size is not None:
+        batch_sampler = BatchSampler(sampler, batch_size, drop_last)
+
+# 3. 
+if sampler is None and batch_sampler is not None:
+    Must: 
+        batch_size = 1
+        shuffle = None or False
+        sampler = None
+        drop_last = None or False
+        
+	batch_size = None
+	drop_last = False
+    
+    sampler = SequentialSampler(dataset)
+
+```
+
+### DataLoader properties
+
+```
+_auto_collation = batch_sampler is not None
+
+_index_sampler = batch_sampler or sampler
+
+if collate_fn is None:
+    if batch_sampler is not None:
+        collate_fn = _utils.collate.default_collate
+    else:
+        collate_fn = _utils.collate.default_convert
+```
+
+
+
+### DataLoader methods
+
+```python
+torch/utils/data/dataloader.py
+
+from typing import ..., TypeVar, Generic, ...
+
+T_co = TypeVar('T_co', covariant=True)
+
+class DataLoader(Generic[T_co]):
+    dataset: Dataset[T_co]
+    batch_size: Optional[int]
+    num_workers: int
+    pin_memory: bool
+    drop_last: bool
+    timeout: float
+    sampler: Union[Sampler, Iterable]
+    pin_memory_device: str
+    prefetch_factor: Optional[int]
+    _iterator : Optional['_BaseDataLoaderIter']
+    __initialized = False
+
+    def __init__(...):
+        ...
+        self.dataset = dataset
+        self.num_workers = num_workers
+        self.prefetch_factor = prefetch_factor
+        self.pin_memory = pin_memory
+        self.pin_memory_device = pin_memory_device
+        self.timeout = timeout
+        self.worker_init_fn = worker_init_fn
+        self.multiprocessing_context = multiprocessing_context
+
+        # Adds forward compatibilities so classic DataLoader can work with DataPipes:
+        #   _DataPipeSerializationWrapper container makes it easier to serialize without redefining pickler
+        if isinstance(self.dataset, IterDataPipe):
+            self.dataset = _IterDataPipeSerializationWrapper(self.dataset)
+        elif isinstance(self.dataset, MapDataPipe):
+            self.dataset = _MapDataPipeSerializationWrapper(self.dataset)
+
+        if isinstance(dataset, IterableDataset):
+            self._dataset_kind = _DatasetKind.Iterable
+            ...
+            # shuffle should be False or None
+            # sampler and batch_sampler should = None
+        else:
+            shuffle = bool(shuffle)
+            self._dataset_kind = _DatasetKind.Map
+
+		# If sampler is not None, then shuffle should = False or None
+        # If batch_sampler is not None, then 
+        # 	sampler should = None
+        # 	batch_size should = 1
+        # 	shuffle should = False or None
+        # 	drop_last should = False or None
+
+        if batch_sampler is not None:
+            batch_size = None
+            drop_last = False
+        elif batch_size is None:
+            # no auto_collation
+            if drop_last:
+                raise ValueError('batch_size=None option disables auto-batching '
+                                 'and is mutually exclusive with drop_last')
+		
+        # Set sampler if is None
+        if sampler is None:  # give default samplers
+            if self._dataset_kind == _DatasetKind.Iterable:
+                # See NOTE [ Custom Samplers and IterableDataset ]
+                sampler = _InfiniteConstantSampler()
+            else:  # map-style
+                if shuffle:
+                    sampler = RandomSampler(dataset, generator=generator)  # type: ignore[arg-type]
+                else:
+                    sampler = SequentialSampler(dataset)  # type: ignore[arg-type]
+		
+        # Set batch_sampler if is None and batch_size is not None
+        if batch_size is not None and batch_sampler is None:
+            # auto_collation without custom batch_sampler
+            batch_sampler = BatchSampler(sampler, batch_size, drop_last)
+
+        self.batch_size = batch_size
+        self.drop_last = drop_last
+        self.sampler = sampler
+        self.batch_sampler = batch_sampler
+        self.generator = generator
+
+        if collate_fn is None:
+            if self._auto_collation:
+                collate_fn = _utils.collate.default_collate
+            else:
+                collate_fn = _utils.collate.default_convert
+
+        self.collate_fn = collate_fn
+        self.persistent_workers = persistent_workers
+
+        self.__initialized = True
+        self._IterableDataset_len_called = None  # See NOTE [ IterableDataset and __len__ ]
+
+        self._iterator = None
+
+        self.check_worker_number_rationality()
+
+        torch.set_vital('Dataloader', 'enabled', 'True')  # type: ignore[attr-defined]
+
+    def _get_iterator(self) -> '_BaseDataLoaderIter':
+        if self.num_workers == 0:
+            return _SingleProcessDataLoaderIter(self)
+        else:
+            self.check_worker_number_rationality()
+            return _MultiProcessingDataLoaderIter(self)
+
+    @property
+    def multiprocessing_context(self):
+        return self.__multiprocessing_context
+
+    @multiprocessing_context.setter
+    def multiprocessing_context(self, multiprocessing_context):
+        if multiprocessing_context is not None:
+            if self.num_workers > 0:
+                if isinstance(multiprocessing_context, str):
+                    valid_start_methods = multiprocessing.get_all_start_methods()
+                    if multiprocessing_context not in valid_start_methods:
+                        raise ValueError(
+                            ('multiprocessing_context option '
+                             'should specify a valid start method in {!r}, but got '
+                             'multiprocessing_context={!r}').format(valid_start_methods, multiprocessing_context))
+                    multiprocessing_context = multiprocessing.get_context(multiprocessing_context)
+
+                if not isinstance(multiprocessing_context, python_multiprocessing.context.BaseContext):
+                    raise TypeError(('multiprocessing_context option should be a valid context '
+                                     'object or a string specifying the start method, but got '
+                                     'multiprocessing_context={}').format(multiprocessing_context))
+            else:
+                raise ValueError(('multiprocessing_context can only be used with '
+                                  'multi-process loading (num_workers > 0), but got '
+                                  'num_workers={}').format(self.num_workers))
+
+        self.__multiprocessing_context = multiprocessing_context
+
+    def __setattr__(self, attr, val):
+        if self.__initialized and attr in (
+                'batch_size', 'batch_sampler', 'sampler', 'drop_last', 'dataset', 'persistent_workers'):
+            raise ValueError(f'{attr} attribute should not be set after {self.__class__.__name__} is initialized')
+
+        super().__setattr__(attr, val)
+
+    # We quote '_BaseDataLoaderIter' since it isn't defined yet and the definition can't be moved up
+    # since '_BaseDataLoaderIter' references 'DataLoader'.
+    def __iter__(self) -> '_BaseDataLoaderIter':
+        # When using a single worker the returned iterator should be
+        # created everytime to avoid resetting its state
+        # However, in the case of a multiple workers iterator
+        # the iterator is only created once in the lifetime of the
+        # DataLoader object so that workers can be reused
+        if self.persistent_workers and self.num_workers > 0:
+            if self._iterator is None:
+                self._iterator = self._get_iterator()
+            else:
+                self._iterator._reset(self)
+            return self._iterator
+        else:
+            return self._get_iterator()
+
+    @property
+    def _auto_collation(self):
+        return self.batch_sampler is not None
+
+    @property
+    def _index_sampler(self):
+        # The actual sampler used for generating indices for `_DatasetFetcher`
+        # (see _utils/fetch.py) to read data at each time. This would be
+        # `.batch_sampler` if in auto-collation mode, and `.sampler` otherwise.
+        # We can't change `.sampler` and `.batch_sampler` attributes for BC
+        # reasons.
+        if self._auto_collation:
+            return self.batch_sampler
+        else:
+            return self.sampler
+
+    def __len__(self) -> int:
+        if self._dataset_kind == _DatasetKind.Iterable:
+            length = self._IterableDataset_len_called = len(self.dataset)  # type: ignore[assignment, arg-type]
+            if self.batch_size is not None:  # IterableDataset doesn't allow custom sampler or batch_sampler
+                from math import ceil
+                if self.drop_last:
+                    length = length // self.batch_size
+                else:
+                    length = ceil(length / self.batch_size)
+            return length
+        else:
+            return len(self._index_sampler)
+
+    def check_worker_number_rationality(self):
+        ...
+```
+
+
+
+
+
+## _BaseDataLoaderIter
+
+```python
+class _BaseDataLoaderIter:
+    def __init__(self, loader: DataLoader) -> None:
+        self._dataset = loader.dataset
+        self._shared_seed = None
+        self._pg = None
+        if isinstance(self._dataset, IterDataPipe):
+            if dist.is_available() and dist.is_initialized():
+                self._pg = dist.new_group(backend="gloo")
+            self._shared_seed = _share_dist_seed(loader.generator, self._pg)
+            shared_rng = torch.Generator()
+            shared_rng.manual_seed(self._shared_seed)
+            self._dataset = torch.utils.data.graph_settings.apply_random_seed(self._dataset, shared_rng)
+        self._dataset_kind = loader._dataset_kind
+        self._IterableDataset_len_called = loader._IterableDataset_len_called
+        self._auto_collation = loader._auto_collation
+        self._drop_last = loader.drop_last
+        self._index_sampler = loader._index_sampler
+        self._num_workers = loader.num_workers
+        ws, rank = _get_distributed_settings()
+        self._world_size = ws
+        self._rank = rank
+        # for other backends, pin_memory_device need to set. if not set
+        # default behaviour is CUDA device. if pin_memory_device is selected
+        # and pin_memory is not set, the default behaviour false.
+        if (len(loader.pin_memory_device) == 0):
+            self._pin_memory = loader.pin_memory and torch.cuda.is_available()
+            self._pin_memory_device = None
+        else:
+            if not loader.pin_memory:
+                warn_msg = ("pin memory device is set and pin_memory flag is not used then device pinned memory won't be used"
+                            "please set pin_memory to true, if you need to use the device pin memory")
+                warnings.warn(warn_msg)
+
+            self._pin_memory = loader.pin_memory
+            self._pin_memory_device = loader.pin_memory_device
+        self._timeout = loader.timeout
+        self._collate_fn = loader.collate_fn
+        self._sampler_iter = iter(self._index_sampler)
+        self._base_seed = torch.empty((), dtype=torch.int64).random_(generator=loader.generator).item()
+        self._persistent_workers = loader.persistent_workers
+        self._num_yielded = 0
+        self._profile_name = f"enumerate(DataLoader)#{self.__class__.__name__}.__next__"
+
+    def __iter__(self) -> '_BaseDataLoaderIter':
+        return self
+
+    def _reset(self, loader, first_iter=False):
+        self._sampler_iter = iter(self._index_sampler)
+        self._num_yielded = 0
+        self._IterableDataset_len_called = loader._IterableDataset_len_called
+        if isinstance(self._dataset, IterDataPipe):
+            self._shared_seed = _share_dist_seed(loader.generator, self._pg)
+            shared_rng = torch.Generator()
+            shared_rng.manual_seed(self._shared_seed)
+            self._dataset = torch.utils.data.graph_settings.apply_random_seed(self._dataset, shared_rng)
+
+    def _next_index(self):
+        return next(self._sampler_iter)  # may raise StopIteration
+
+    def _next_data(self):
+        raise NotImplementedError
+
+    def __next__(self) -> Any:
+        with torch.autograd.profiler.record_function(self._profile_name):
+            if self._sampler_iter is None:
+                # TODO(https://github.com/pytorch/pytorch/issues/76750)
+                self._reset()  # type: ignore[call-arg]
+            data = self._next_data()
+            self._num_yielded += 1
+            if self._dataset_kind == _DatasetKind.Iterable and \
+                    self._IterableDataset_len_called is not None and \
+                    self._num_yielded > self._IterableDataset_len_called:
+                warn_msg = ("Length of IterableDataset {} was reported to be {} (when accessing len(dataloader)), but {} "
+                            "samples have been fetched. ").format(self._dataset, self._IterableDataset_len_called,
+                                                                  self._num_yielded)
+                if self._num_workers > 0:
+                    warn_msg += ("For multiprocessing data-loading, this could be caused by not properly configuring the "
+                                 "IterableDataset replica at each worker. Please see "
+                                 "https://pytorch.org/docs/stable/data.html#torch.utils.data.IterableDataset for examples.")
+                warnings.warn(warn_msg)
+            return data
+
+    def __len__(self) -> int:
+        return len(self._index_sampler)
+
+    def __getstate__(self):
+        # TODO: add limited pickling support for sharing an iterator
+        # across multiple threads for HOGWILD.
+        # Probably the best way to do this is by moving the sample pushing
+        # to a separate thread and then just sharing the data queue
+        # but signalling the end is tricky without a non-blocking API
+        raise NotImplementedError("{} cannot be pickled", self.__class__.__name__)
+
+```
+
+
+
+## _SingleProcessDataLoaderIter
+
+```python
+class _SingleProcessDataLoaderIter(_BaseDataLoaderIter):
+    def __init__(self, loader):
+        super().__init__(loader)
+        assert self._timeout == 0
+        assert self._num_workers == 0
+
+        # Adds forward compatibilities so classic DataLoader can work with DataPipes:
+        #   Taking care of distributed sharding
+        if isinstance(self._dataset, (IterDataPipe, MapDataPipe)):
+            # For BC, use default SHARDING_PRIORITIES
+            torch.utils.data.graph_settings.apply_sharding(self._dataset, self._world_size, self._rank)
+
+        self._dataset_fetcher = _DatasetKind.create_fetcher(
+            self._dataset_kind, self._dataset, self._auto_collation, self._collate_fn, self._drop_last)
+
+    def _next_data(self):
+        index = self._next_index()  # may raise StopIteration
+        data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+        if self._pin_memory:
+            data = _utils.pin_memory.pin_memory(data, self._pin_memory_device)
+        return data
+```
+
+
+
+
+
+## _DatasetKind
+
+```
+class _DatasetKind:
+    Map = 0
+    Iterable = 1
+
+    @staticmethod
+    def create_fetcher(kind, dataset, auto_collation, collate_fn, drop_last):
+        if kind == _DatasetKind.Map:
+            return _utils.fetch._MapDatasetFetcher(dataset, auto_collation, collate_fn, drop_last)
+        else:
+            return _utils.fetch._IterableDatasetFetcher(dataset, auto_collation, collate_fn, drop_last)
+
+
+```
+
+
+
+## _BaseDatasetFetcher
+
+```
+class _BaseDatasetFetcher:
+    def __init__(self, dataset, auto_collation, collate_fn, drop_last):
+        self.dataset = dataset
+        self.auto_collation = auto_collation
+        self.collate_fn = collate_fn
+        self.drop_last = drop_last
+
+    def fetch(self, possibly_batched_index):
+        raise NotImplementedError()
+```
+
+
+
+## _MapDatasetFetcher
+
+```
+class _MapDatasetFetcher(_BaseDatasetFetcher):
+    def fetch(self, possibly_batched_index):
+        if self.auto_collation:
+            if hasattr(self.dataset, "__getitems__") and self.dataset.__getitems__:
+                data = self.dataset.__getitems__(possibly_batched_index)
+            else:
+                data = [self.dataset[idx] for idx in possibly_batched_index]
+        else:
+            data = self.dataset[possibly_batched_index]
+        return self.collate_fn(data)
+```
 
 
 
@@ -2831,4 +3877,36 @@ https://github.com/jshilong/DDQ/blob/ddq_detr/projects/models/ddq_detr.py
 Line 126至128: `[tmp_dense, tmp]`变量名应互换 。
 
 ![image-20230804024600646](C:\Users\Phoenix\AppData\Roaming\Typora\typora-user-images\image-20230804024600646.png)
+
+
+
+老师好，这是今天的会议小结：
+
+1 对齐DDQ推理结果和训练loss，提交pr
+
+2 询问DDQ论文作者：1 为什么要使用更新decoder self attention mask的方式筛选，而不是先直接筛选。2 Decoder的self attention mask中的distinct mask假如第i个被选中，则第i行和第i列都会设置为1，而不是只把第i行设置为1（理论上这样才会筛选第i个），原因是实验的结果是前者更优吗？
+
+3 DDQ结束后的可选任务： 1撰写DDQ技术分享文章。 2 分析pytorch版本和paddle版本RTDETR的数据增强对齐，模型推理对齐和loss对齐。
+
+
+
+
+
+
+
+bbox_head
+
+|                  |      |      |      |
+| ---------------- | ---- | ---- | ---- |
+| reg_branches     | 1-6  | 7    | 8    |
+| aux_reg_branches | 1-6  |      |      |
+|                  |      |      |      |
+
+关于bbox_head的回归branch:
+
+reg_branches共8个。其中1-6用于dino_query+top_k_query的6层decoder回归。7用于dino_query+top_k_query的最后一层encoder回归。8用于dense_query的最后一层encoder回归。
+
+aux_reg_branches共6个，用于dense_query的6层decoder回归。
+
+
 
