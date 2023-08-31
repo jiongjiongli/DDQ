@@ -347,13 +347,13 @@ source ~/ddq/new/detr_py38/bin/activate
 
 cd ~/ddq/new/mmdetection/
 
-python tools/train.py configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr
+python tools/train.py configs/ddq//ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr
 
-python tools/train.py configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr_seed7 --cfg-options randomness.seed=7
+python tools/train.py configs/ddq//ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr_seed7 --cfg-options randomness.seed=7
 
 # rm -rf ./exp/ddq_detr_seed7_det
 
-python tools/train.py configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr_seed7_det --cfg-options randomness.seed=7 randomness.deterministic=True
+python tools/train.py configs/ddq/ddq-detr-4scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr_seed7_det --cfg-options randomness.seed=7 randomness.deterministic=True
 
 ```
 
@@ -364,21 +364,21 @@ python tools/train.py configs/ddq_detr/ddq-detr-4scale_r50_8xb2-12e_coco.py --wo
 ```
 export CUDA_VISIBLE_DEVICES=-1
 
-cp configs/ddq_detr/ddq-detr-5scale_r50_8xb2-12e_coco.py configs/ddq_detr/train_ddq-detr-5scale_r50_8xb2-12e_coco.py
+cp configs/ddq//ddq-detr-5scale_r50_8xb2-12e_coco.py configs/ddq//train_ddq-detr-5scale_r50_8xb2-12e_coco.py
 
-vi configs/ddq_detr/train_ddq-detr-5scale_r50_8xb2-12e_coco.py
+vi configs/ddq//train_ddq-detr-5scale_r50_8xb2-12e_coco.py
 
 # default_hooks=dict(checkpoint=dict(type='CheckpointHook', interval=1, by_epoch=False))
 
-python tools/train.py configs/ddq_detr/train_ddq-detr-5scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr
+python tools/train.py configs/ddq//train_ddq-detr-5scale_r50_8xb2-12e_coco.py --work-dir ./exp/ddq_detr
 
-cp configs/ddq_detr/ddq-detr-4scale_swinl_8xb2-30e_coco.py configs/ddq_detr/train_ddq-detr-4scale_swinl_8xb2-30e_coco.py
+cp configs/ddq//ddq-detr-4scale_swinl_8xb2-30e_coco.py configs/ddq//train_ddq-detr-4scale_swinl_8xb2-30e_coco.py
 
-vi configs/ddq_detr/train_ddq-detr-4scale_swinl_8xb2-30e_coco.py
+vi configs/ddq//train_ddq-detr-4scale_swinl_8xb2-30e_coco.py
 # init_cfg=None
 # default_hooks=dict(checkpoint=dict(type='CheckpointHook', interval=1, by_epoch=False))
 
-python tools/train.py configs/ddq_detr/train_ddq-detr-4scale_swinl_8xb2-30e_coco.py --work-dir ./exp/ddq_detr
+python tools/train.py configs/ddq//train_ddq-detr-4scale_swinl_8xb2-30e_coco.py --work-dir ./exp/ddq_detr
 
 ```
 
